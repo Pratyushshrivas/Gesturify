@@ -2,7 +2,6 @@ import cv2
 import os
 import numpy as np
 import math
-import time
 from cvzone.HandTrackingModule import HandDetector
 from cvzone.ClassificationModule import Classifier
 
@@ -11,18 +10,15 @@ IMG_SIZE = 300
 OFFSET = 20
 LABELS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V",
           "W", "X", "Y", "Z"]
+
+# Initialize the HandDetector and Classifier
 detector = HandDetector(maxHands=1)
 classifier = Classifier("Model2/keras_model_compatible.h5", "Model2/labels.txt")
 
-# Global variable to store the final text
-final_text = ""
-
-
 def process_and_predict(image_path):
-    global final_text  # Declare final_text as global
-    prediction_buffer = []  # Buffer to store the current word
-    last_detection_time = time.time()
-
+    """
+    Process the image at the given path and predict the letter.
+    """
     try:
         img = cv2.imread(image_path)  # Read the image
         if img is None:
@@ -30,19 +26,9 @@ def process_and_predict(image_path):
             return None
 
         hands, img = detector.findHands(img)  # Detect hands in the image
-        current_time = time.time()
-
         if not hands:
-            # If no hand detected, check if it's been 1 second since the last detection
-            if current_time - last_detection_time > 1 and prediction_buffer:
-                # Word completion: Add current buffer as a word and reset
-                final_text += ''.join(prediction_buffer) + " "
-                print(f"Word completed: {''.join(prediction_buffer)}")
-                prediction_buffer = []  # Clear buffer for the next word
-            return None  # Skip processing if no hands detected
-
-        # Update the last detection time
-        last_detection_time = current_time
+            print(f"No hand detected in image {image_path}.")
+            return None
 
         hand = hands[0]
         x, y, w, h = hand['bbox']
@@ -71,11 +57,7 @@ def process_and_predict(image_path):
 
         # Make the prediction
         prediction, index = classifier.getPrediction(imgWhite, draw=False)
-        letter = LABELS[index]
-        prediction_buffer.append(letter)
-
-        print(f"Current word: {''.join(prediction_buffer)}")
-        return letter
+        return LABELS[index]
     except Exception as e:
         print(f"Error in process_and_predict: {e}")
         return None
@@ -83,8 +65,3 @@ def process_and_predict(image_path):
         # Clean up: Delete the image after processing
         if os.path.exists(image_path):
             os.remove(image_path)
-
-
-def display_final_text():
-    global final_text
-    print(f"Final Text: {final_text.strip()}")

@@ -60,7 +60,7 @@ def stream():
 
         # Return the predicted letter or a space
         if predicted_letter is None:
-            return " "  # Return a space for a gap
+            return ""  # Return a space for a gap
         else:
             return predicted_letter  # Return the predicted letter
 
