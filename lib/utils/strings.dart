@@ -1,4 +1,5 @@
 class Strings {
-  
-  final projectName = 'Sign Language Detection';
+  final projectName = 'Gesturify';
+
+  final start = 'Start';
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -12,14 +13,14 @@ import 'package:speech_to_text/speech_to_text.dart';
 import 'package:hackfinity/utils/assets.dart';
 import 'package:hackfinity/utils/strings.dart';
 
-class HomeScreenSecond extends StatefulWidget {
-  const HomeScreenSecond({super.key});
+class HomeScreenGemini extends StatefulWidget {
+  const HomeScreenGemini({super.key});
 
   @override
-  State<HomeScreenSecond> createState() => _HomeScreenSecondState();
+  State<HomeScreenGemini> createState() => _HomeScreenGeminiState();
 }
 
-class _HomeScreenSecondState extends State<HomeScreenSecond>
+class _HomeScreenGeminiState extends State<HomeScreenGemini>
     with WidgetsBindingObserver {
   bool _isCameraInitialized = false;
   bool isStreaming = true;
@@ -271,28 +272,24 @@ class _HomeScreenSecondState extends State<HomeScreenSecond>
                 ),
               ),
 
-              // Stream Start/Stop Button
-              Positioned(
-                right: 80,
-                bottom: 16,
-                child: FloatingActionButton(
-                  onPressed: () {
-                    if (isStreaming) {
-                      setState(() {
-                        isStreaming = false;
-                      });
-                      stopStreaming();
-                    } else {
+              // Re-Stream Button
+              Visibility(
+                visible: !isStreaming,
+                child: Positioned(
+                  right: 80,
+                  bottom: 16,
+                  child: FloatingActionButton(
+                    onPressed: () {
                       setState(() {
                         isStreaming = true;
                       });
                       streamToBackend();
-                    }
-                  },
-                  backgroundColor: Colors.green,
-                  tooltip: 'Stream',
-                  child: Icon(
-                    isStreaming ? Icons.videocam_off_rounded : Icons.videocam_rounded,
+                    },
+                    backgroundColor: Colors.green,
+                    tooltip: 'Re-Stream',
+                    child: const Icon(
+                      Icons.stream_rounded,
+                    ),
                   ),
                 ),
               ),
@@ -400,31 +397,25 @@ class _HomeScreenSecondState extends State<HomeScreenSecond>
       });
     }
   }
-
+// Replace with your Flask backend URL
   Future<void> sendFrameToBackend(Uint8List imageBytes) async {
     try {
       final response = await http.post(
-        Uri.parse('http://10.9.214.176:5000/stream'), // Meenakshi
-        // Uri.parse('http://10.3.65.221:5000/stream'), // Pratyush
-        // Uri.parse('http://10.9.205.208:5000/stream'), // My
-        headers: {'Content-Type': 'application/octet-stream'},
-        body: imageBytes,
+        Uri.parse(
+          'http://10.9.205.208:5000/stream',
+        ),
+        body: {'image': base64Encode(imageBytes)},
       );
-      if (response.statusCode == 200 && speechToText.isNotListening) {
-        debugPrint('Frame sent successfully!');
 
-        lastWords = lastWords + response.body.toString();
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        final predictedText = responseData['predicted_text'];
 
-        if (response.body.isNotEmpty) {
-          lastWords = lastWords + response.body.toString();
-        } else {
-          lastWords = lastWords;
-        }
+        setState(() {
+          lastWords = predictedText;
+        });
 
-        if (lastWords[lastWords.length - 1] == '' &&
-            lastWords[lastWords.length - 2] == '') {
-          lastWords = lastWords.substring(0, lastWords.length - 1);
-        }
+        debugPrint('Frame sent successfully! Predicted text: $predictedText');
       } else {
         debugPrint('Failed to send frame: ${response.statusCode}');
       }

@@ -4,6 +4,7 @@ import 'package:camera/camera.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
+import 'package:hackfinity/utils/assets.dart';
 import 'package:hackfinity/utils/strings.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -14,9 +15,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
-  CameraController? _controller;
+  CameraController? controller;
   bool _isCameraInitialized = false;
-  late final List<CameraDescription> _cameras;
+  late final List<CameraDescription> cameras;
   // bool _isRecording = false;
 
   bool isFlashActive = false;
@@ -25,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool speechEnabled = false;
   String lastWords = '';
 
+  Assets assets = Assets();
   Strings strings = Strings();
 
   @override
@@ -36,15 +38,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Future<void> initCamera() async {
-    _cameras = await availableCameras();
+    cameras = await availableCameras();
     // Initialize the camera with the first camera in the list
-    await onNewCameraSelected(_cameras.first);
+    await onNewCameraSelected(cameras.first);
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // App state changed before we got the chance to initialize.
-    final CameraController? cameraController = _controller;
+    final CameraController? cameraController = controller;
 
     // App state changed before we got the chance to initialize.
     if (cameraController == null || !cameraController.value.isInitialized) {
@@ -62,19 +64,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    _controller?.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+    controller?.dispose();
   }
 
   void toggleFlash() async {
-    if (_controller?.value.flashMode == FlashMode.torch) {
-      await _controller?.setFlashMode(FlashMode.off);
+    if (controller?.value.flashMode == FlashMode.torch) {
+      await controller?.setFlashMode(FlashMode.off);
       setState(() {
         isFlashActive = false;
       });
     } else {
-      await _controller?.setFlashMode(FlashMode.torch);
+      await controller?.setFlashMode(FlashMode.torch);
       setState(() {
         isFlashActive = true;
       });
@@ -120,7 +122,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void onSpeechResult(SpeechRecognitionResult result) {
     setState(() {
       lastWords = result.recognizedWords;
-      // log(4);
       debugPrint('Speech: $lastWords');
     });
   }
@@ -174,7 +175,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 height: double.infinity,
                 width: double.infinity,
                 child: CameraPreview(
-                  _controller!,
+                  controller!,
                 ),
               ),
               Container(
@@ -189,6 +190,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    Image.asset(
+                      assets.logo,
+                      height: 30,
+                      width: 30,
+                    ),
+                    const SizedBox(width: 10),
                     Text(
                       strings.projectName,
                       style: const TextStyle(
@@ -199,30 +206,33 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ],
                 ),
               ),
-              Positioned(
-                bottom: 0,
-                child: Container(
-                  height: height * 0.4,
-                  width: width,
-                  decoration: const BoxDecoration(
-                    color: Colors.black87,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(15),
-                      topRight: Radius.circular(15),
+              Visibility(
+                visible: lastWords.isNotEmpty,
+                child: Positioned(
+                  bottom: 0,
+                  child: Container(
+                    height: height * 0.4,
+                    width: width,
+                    decoration: const BoxDecoration(
+                      color: Colors.black87,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(15),
+                        topRight: Radius.circular(15),
+                      ),
                     ),
-                  ),
-                  padding: const EdgeInsets.only(
-                    top: 12,
-                    left: 12,
-                    right: 23,
-                    bottom: 75,
-                  ),
-                  child: SingleChildScrollView(
-                    child: Text(
-                      lastWords,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
+                    padding: const EdgeInsets.only(
+                      top: 12,
+                      left: 12,
+                      right: 23,
+                      bottom: 75,
+                    ),
+                    child: SingleChildScrollView(
+                      child: Text(
+                        lastWords,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                        ),
                       ),
                     ),
                   ),
@@ -244,24 +254,22 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ],
                 ),
               ),
-              Positioned(
-                right: 10,
-                bottom: 10,
-                child: FloatingActionButton(
-                  onPressed: () {
-                    if (speechToText.isNotListening) {
-                      startListening();
-                    } else {
-                      stopListening();
-                    }
-                  },
-                  tooltip: 'Listen',
-                  child: Icon(
-                    speechToText.isNotListening ? Icons.mic_off : Icons.mic,
-                  ),
-                ),
-              ),
             ],
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () {
+              if (speechToText.isNotListening) {
+                startListening();
+              } else {
+                stopListening();
+              }
+            },
+            tooltip: 'Listen',
+            child: Icon(
+              speechToText.isNotListening
+                  ? Icons.mic_off_rounded
+                  : Icons.mic_rounded,
+            ),
           ),
         ),
       );
@@ -273,13 +281,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Future<void> onNewCameraSelected(CameraDescription description) async {
-    final previousCameraController = _controller;
+    final previousCameraController = controller;
 
     // Instantiating the camera controller
     final CameraController cameraController = CameraController(
       description,
-      ResolutionPreset.ultraHigh,
-      imageFormatGroup: ImageFormatGroup.jpeg,
+      ResolutionPreset.medium,
+      imageFormatGroup: ImageFormatGroup.yuv420,
     );
 
     // Initialize controller
@@ -294,7 +302,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     // Replace with the new controller
     if (mounted) {
       setState(() {
-        _controller = cameraController;
+        controller = cameraController;
       });
     }
 
@@ -306,7 +314,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     // Update the Boolean
     if (mounted) {
       setState(() {
-        _isCameraInitialized = _controller!.value.isInitialized;
+        _isCameraInitialized = controller!.value.isInitialized;
       });
     }
   }

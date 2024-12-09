@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:hackfinity/screens/home_screen.dart';
+import 'package:hackfinity/screens/splash_screen.dart';
 import 'package:hackfinity/utils/strings.dart';
 
 void main() {
@@ -11,7 +11,7 @@ void main() {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  
+
   runApp(const MyApp());
 }
 
@@ -25,11 +25,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: strings.projectName,
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+      theme: ThemeData.dark(
         useMaterial3: true,
       ),
-      home: const HomeScreen(),
+      home: const SplashScreen(),
     );
   }
 }

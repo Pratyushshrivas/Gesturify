@@ -12,18 +12,20 @@ import 'package:speech_to_text/speech_to_text.dart';
 import 'package:hackfinity/utils/assets.dart';
 import 'package:hackfinity/utils/strings.dart';
 
-class HomeScreenSecond extends StatefulWidget {
-  const HomeScreenSecond({super.key});
+class HomeScreenPratyush extends StatefulWidget {
+  const HomeScreenPratyush({super.key});
 
   @override
-  State<HomeScreenSecond> createState() => _HomeScreenSecondState();
+  State<HomeScreenPratyush> createState() => _HomeScreenPratyushState();
 }
 
-class _HomeScreenSecondState extends State<HomeScreenSecond>
+class _HomeScreenPratyushState extends State<HomeScreenPratyush>
     with WidgetsBindingObserver {
   bool _isCameraInitialized = false;
   bool isStreaming = true;
   bool isFlashActive = false;
+
+  String finalWords = '';
 
   CameraController? controller;
 
@@ -239,7 +241,7 @@ class _HomeScreenSecondState extends State<HomeScreenSecond>
 
               // Text Container
               Visibility(
-                visible: lastWords.isNotEmpty,
+                visible: finalWords.isNotEmpty || lastWords.isNotEmpty,
                 child: Positioned(
                   bottom: 0,
                   child: Container(
@@ -258,48 +260,56 @@ class _HomeScreenSecondState extends State<HomeScreenSecond>
                       right: 23,
                       bottom: 75,
                     ),
-                    child: SingleChildScrollView(
-                      child: Text(
-                        lastWords,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
+                    child: Column(
+                      children: [
+                        Text(
+                          lastWords,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                          ),
                         ),
-                      ),
+                        SingleChildScrollView(
+                          child: Text(
+                            finalWords,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                            ),
+                            textAlign: TextAlign.start,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
 
-              // Stream Start/Stop Button
-              Positioned(
-                right: 80,
-                bottom: 16,
-                child: FloatingActionButton(
-                  onPressed: () {
-                    if (isStreaming) {
-                      setState(() {
-                        isStreaming = false;
-                      });
-                      stopStreaming();
-                    } else {
+              // Re-Stream Button
+              Visibility(
+                visible: !isStreaming,
+                child: Positioned(
+                  right: 80,
+                  bottom: 16,
+                  child: FloatingActionButton(
+                    onPressed: () {
                       setState(() {
                         isStreaming = true;
                       });
                       streamToBackend();
-                    }
-                  },
-                  backgroundColor: Colors.green,
-                  tooltip: 'Stream',
-                  child: Icon(
-                    isStreaming ? Icons.videocam_off_rounded : Icons.videocam_rounded,
+                    },
+                    backgroundColor: Colors.green,
+                    tooltip: 'Re-Stream',
+                    child: const Icon(
+                      Icons.stream_rounded,
+                    ),
                   ),
                 ),
               ),
 
               // Speak Button
               Visibility(
-                visible: lastWords.isNotEmpty,
+                visible: finalWords.isNotEmpty,
                 child: Positioned(
                   left: 16,
                   bottom: 16,
@@ -309,6 +319,87 @@ class _HomeScreenSecondState extends State<HomeScreenSecond>
                     tooltip: 'Speak',
                     child: const Icon(
                       Icons.record_voice_over_rounded,
+                    ),
+                  ),
+                ),
+              ),
+
+              // Select
+              Visibility(
+                visible: lastWords.isNotEmpty,
+                child: Positioned(
+                  left: 80,
+                  bottom: 16,
+                  child: IconButton(
+                    onPressed: () {
+                      setState(() {
+                        finalWords = finalWords + lastWords[lastWords.length - 1];
+                        lastWords = '';
+                      });
+                    },
+                    tooltip: 'Select',
+                    icon: const Icon(
+                      Icons.check,
+                    ),
+                  ),
+                ),
+              ),
+
+              // Remove
+              Visibility(
+                visible: lastWords.isNotEmpty,
+                child: Positioned(
+                  left: 120,
+                  bottom: 16,
+                  child: IconButton(
+                    onPressed: () {
+                      setState(() {
+                        lastWords = '';
+                      });
+                    },
+                    tooltip: 'Remove',
+                    icon: const Icon(
+                      Icons.remove_circle_outline_rounded,
+                    ),
+                  ),
+                ),
+              ),
+
+              // Space
+              Visibility(
+                visible: lastWords.isNotEmpty,
+                child: Positioned(
+                  left: 160,
+                  bottom: 16,
+                  child: IconButton(
+                    onPressed: () {
+                      setState(() {
+                        finalWords = '$finalWords ';
+                      });
+                    },
+                    tooltip: 'Space',
+                    icon: const Icon(
+                      Icons.space_bar,
+                    ),
+                  ),
+                ),
+              ),
+            
+              // Backspace
+              Visibility(
+                visible: finalWords.isNotEmpty,
+                child: Positioned(
+                  left: 200,
+                  bottom: 16,
+                  child: IconButton(
+                    onPressed: () {
+                      setState(() {
+                        finalWords = finalWords.substring(0, finalWords.length - 1);
+                      });
+                    },
+                    tooltip: 'Remove',
+                    icon: const Icon(
+                      Icons.backspace_outlined,
                     ),
                   ),
                 ),
@@ -385,7 +476,7 @@ class _HomeScreenSecondState extends State<HomeScreenSecond>
     if (isStreaming) {
       lastWords = '';
       streamingTimer =
-          Timer.periodic(const Duration(milliseconds: 1000), (timer) async {
+          Timer.periodic(const Duration(milliseconds: 100), (timer) async {
         if (controller != null && controller!.value.isInitialized) {
           try {
             final XFile? frame = await controller?.takePicture();
@@ -404,9 +495,9 @@ class _HomeScreenSecondState extends State<HomeScreenSecond>
   Future<void> sendFrameToBackend(Uint8List imageBytes) async {
     try {
       final response = await http.post(
-        Uri.parse('http://10.9.214.176:5000/stream'), // Meenakshi
-        // Uri.parse('http://10.3.65.221:5000/stream'), // Pratyush
-        // Uri.parse('http://10.9.205.208:5000/stream'), // My
+        Uri.parse('http://192.168.188.91:5000/stream'), // Meenakshi
+        // Uri.parse('http://10.9.214.91:5000/stream'), // Pratyush
+        // Uri.parse('http://10.223.137.140:5000/stream'), // My
         headers: {'Content-Type': 'application/octet-stream'},
         body: imageBytes,
       );
@@ -445,8 +536,8 @@ class _HomeScreenSecondState extends State<HomeScreenSecond>
   }
 
   Future<void> speak() async {
-    if (lastWords.isNotEmpty) {
-      await textToSpeech.speak(lastWords);
+    if (finalWords.isNotEmpty) {
+      await textToSpeech.speak(finalWords);
     }
   }
 
