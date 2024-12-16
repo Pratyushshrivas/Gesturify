@@ -7,7 +7,7 @@ def custom_depthwise_conv2d(*args, **kwargs):
     return DepthwiseConv2D(*args, **kwargs)
 
 # Load model with custom objects
-model = load_model("Model2/keras_model.h5", custom_objects={'DepthwiseConv2D': custom_depthwise_conv2d})
-print("Model2 loaded successfully!")
+model = load_model("ModelM/keras_model.h5", custom_objects={'DepthwiseConv2D': custom_depthwise_conv2d})
+print("ModelM loaded successfully!")
 
-model.save("Model2/keras_model_compatible.h5")
+model.save("ModelM/keras_model_compatible.h5")

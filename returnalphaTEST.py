@@ -13,7 +13,7 @@ LABELS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", 
 
 # Initialize the HandDetector and Classifier
 detector = HandDetector(maxHands=1)
-classifier = Classifier("Model2/keras_model_compatible.h5", "Model2/labels.txt")
+classifier = Classifier("ModelM/keras_model_compatible.h5", "ModelM/labels.txt")
 
 def process_and_predict(image_path):
     """
