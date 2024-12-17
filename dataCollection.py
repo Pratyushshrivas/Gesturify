@@ -10,7 +10,7 @@ detector = HandDetector(maxHands=1)   #It will take only 1 hand as input in came
 offset = 20
 imgSize = 300
 
-folder = ""
+folder = ("Data/H")
 counter = 0
 
 while True:

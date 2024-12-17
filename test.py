@@ -6,13 +6,13 @@ import math
 
 cap = cv2.VideoCapture(0) #For capturing video
 detector = HandDetector(maxHands=1)   #It will take only 1 hand as input in camera
-classifier = Classifier("Model2/keras_model_compatible.h5","Model2/labels.txt")
+classifier = Classifier("Model/keras_new_model.h5","Model/labels.txt")
 
 offset = 20
 imgSize = 300
 
 counter = 0
-labels = ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"]
+labels = ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"," "]
 
 while True:
     success, img = cap.read()  #it will read the image and store to img variable
@@ -36,7 +36,6 @@ while True:
             prediction, index = classifier.getPrediction(imgWhite,draw= False)
             print(prediction,index)
             print(index)
-
 
         else:
             k = imgSize / w

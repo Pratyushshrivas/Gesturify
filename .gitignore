@@ -1,6 +1,7 @@
 .idea/
 .venv/
 Data/
-checking.py
-Model/
-
+BackendMain.py
+BackendTest.py
+Backend.py
+__pycache__/
