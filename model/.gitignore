@@ -1,0 +1,7 @@
+.idea/
+.venv/
+Data/
+BackendMain.py
+BackendTest.py
+Backend.py
+__pycache__/
